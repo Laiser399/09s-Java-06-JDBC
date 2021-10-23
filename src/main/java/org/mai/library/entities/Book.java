@@ -1,5 +1,7 @@
 package org.mai.library.entities;
 
+import java.util.Objects;
+
 /**
  * Created by Asus on 10/21/2018.
  */
@@ -26,5 +28,18 @@ public class Book {
                 "id=" + id +
                 ", title='" + title + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Book book = (Book) o;
+        return id == book.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }
