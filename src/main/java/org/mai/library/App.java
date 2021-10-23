@@ -42,7 +42,7 @@ public class App {
             System.out.println(students);
 
         } catch (Exception e) {
-            logger.debug("main: %s".formatted(e));
+            logger.debug(e);
         }
     }
 
