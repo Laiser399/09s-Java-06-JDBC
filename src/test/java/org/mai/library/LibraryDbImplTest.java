@@ -123,6 +123,31 @@ public class LibraryDbImplTest {
     }
 
     @Test
+    public void borrowBookDb() throws SQLException {
+        library.addNewBook(book1);
+        library.addStudent(student1);
+
+        library.borrowBook(nonExistingBook, student1);
+        library.borrowBook(book1, nonExistingStudent);
+
+        var selectStatement = connection.prepareStatement("""
+                select student_id from Book;""");
+
+        var resultSet = selectStatement.executeQuery();
+        resultSet.next();
+        resultSet.getInt("student_id");
+        assertThat(resultSet.wasNull(), equalTo(true));
+
+        library.borrowBook(book1, student1);
+        library.borrowBook(book1, student2);
+
+        resultSet = selectStatement.executeQuery();
+        resultSet.next();
+        var borrowedStudentId = resultSet.getInt("student_id");
+        assertThat(borrowedStudentId, equalTo(student1.getId()));
+    }
+
+    @Test
     public void returnBook() {
         addBooks();
         addStudents();
