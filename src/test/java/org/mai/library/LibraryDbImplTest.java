@@ -6,14 +6,18 @@ import org.junit.Test;
 import org.mai.library.entities.Book;
 import org.mai.library.entities.Student;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
+@SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 public class LibraryDbImplTest {
     private static final String connectionString = "jdbc:h2:mem:library";
 
+    private Connection connection;
     private LibraryDbImpl library;
 
     private final Book book1 = new Book(1, "bored book");
@@ -32,7 +36,7 @@ public class LibraryDbImplTest {
 
     @Before
     public void setUp() throws Exception {
-        var connection = DriverManager.getConnection(connectionString);
+        connection = DriverManager.getConnection(connectionString);
         App.createTables(connection);
         library = new LibraryDbImpl(connection);
     }
@@ -41,6 +45,7 @@ public class LibraryDbImplTest {
     public void tearDown() throws Exception {
         library.close();
         library = null;
+        connection = null;
     }
 
     @Test
@@ -50,6 +55,27 @@ public class LibraryDbImplTest {
         assertThat(library.addNewBook(book1SameName), equalTo(true));
         assertThat(library.addNewBook(book2), equalTo(true));
         assertThat(library.addNewBook(book3), equalTo(true));
+    }
+
+    @Test
+    public void addNewBookDb() throws Exception {
+        library.addNewBook(book1);
+        library.addNewBook(duplicatedBook1Id);
+
+        var selectStatement = connection.prepareStatement("""
+                select book_id, book_title, student_id from Book;""");
+
+        var resultSet = selectStatement.executeQuery();
+
+        var hasFirst = resultSet.next();
+        assertThat(hasFirst, equalTo(true));
+        assertThat(resultSet.getInt("book_id"), equalTo(book1.getId()));
+        assertThat(resultSet.getString("book_title"), equalTo(book1.getTitle()));
+        resultSet.getInt("student_id");
+        assertThat(resultSet.wasNull(), equalTo(true));
+
+        var hasSecond = resultSet.next();
+        assertThat(hasSecond, equalTo(false));
     }
 
     @Test
