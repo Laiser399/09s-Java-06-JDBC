@@ -8,10 +8,10 @@ import org.mai.library.entities.Student;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 public class LibraryDbImplTest {
@@ -85,6 +85,25 @@ public class LibraryDbImplTest {
         assertThat(library.addStudent(student1SameName), equalTo(true));
         assertThat(library.addStudent(student2), equalTo(true));
         assertThat(library.addStudent(student3), equalTo(true));
+    }
+
+    @Test
+    public void addStudentDb() throws SQLException {
+        library.addStudent(student1);
+        library.addStudent(duplicatedStudent1Id);
+
+        var selectStatement = connection.prepareStatement("""
+                select student_id, student_name from Student;""");
+
+        var resultSet = selectStatement.executeQuery();
+
+        var hasFirst = resultSet.next();
+        assertThat(hasFirst, equalTo(true));
+        assertThat(resultSet.getInt("student_id"), equalTo(student1.getId()));
+        assertThat(resultSet.getString("student_name"), equalTo(student1.getName()));
+
+        var hasSecond = resultSet.next();
+        assertThat(hasSecond, equalTo(false));
     }
 
     @Test
