@@ -9,6 +9,8 @@ import org.mai.library.entities.Student;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -217,6 +219,29 @@ public class LibraryDbImplTest {
 
         availableBooks = library.findAvailableBooks();
         assertThat(availableBooks, hasItems(book1, book2, book3));
+    }
+
+    @Test
+    public void findAvailableBooksDb() throws SQLException {
+        addBooks();
+        addStudents();
+        library.borrowBook(book1, student1);
+
+        var allBooks = Arrays.asList(book1, book2, book3);
+        var availableBooks = library.findAvailableBooks();
+
+        var selectStatement = connection.prepareStatement("""
+                select student_id from Book where book_id = ?;""");
+
+        for (var book: allBooks) {
+            selectStatement.setInt(1, book.getId());
+            var resultSet = selectStatement.executeQuery();
+            resultSet.next();
+            resultSet.getInt("student_id");
+
+            var mustBeNull = availableBooks.contains(book);
+            assertThat(resultSet.wasNull(), equalTo(mustBeNull));
+        }
     }
 
     @Test
